@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudStore • Arquitectura Web de 3 Capas</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ================= BANNER DE ARQUITECTURA 3 CAPAS ================= -->
+  <header class="arch-banner">
+    <div class="container arch-container">
+      <div class="arch-info">
+        <span class="badge-tag">UPC • Cloud Computing</span>
+        <h1>Arquitectura Web Distribuida de 3 Capas</h1>
+      </div>
+      <div class="tiers-status" id="tiersStatus">
+        <div class="tier-pill tier-web" title="Capa 1: Servidor Web Nginx">
+          <span class="dot online"></span>
+          <span class="tier-label">Capa 1: Web (Nginx)</span>
+        </div>
+        <span class="arrow">➔</span>
+        <div class="tier-pill tier-app" id="tierAppStatus" title="Capa 2: Servidor Backend :8080">
+          <span class="dot checking"></span>
+          <span class="tier-label" id="tierAppLabel">Capa 2: App (:8080)</span>
+        </div>
+        <span class="arrow">➔</span>
+        <div class="tier-pill tier-db" id="tierDbStatus" title="Capa 3: Amazon RDS PostgreSQL :5432">
+          <span class="dot checking"></span>
+          <span class="tier-label" id="tierDbLabel">Capa 3: RDS (PostgreSQL)</span>
+        </div>
+        <button class="btn-diag" id="btnOpenDiag" title="Ver diagnóstico detallado de la infraestructura">🔍 Diagnóstico</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= BARRA DE NAVEGACIÓN DE LA TIENDA ================= -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <div class="brand">
+        <span class="brand-logo">🛒</span>
+        <div class="brand-text">
+          <h2>CloudStore</h2>
+          <small>Tienda Virtual Demo</small>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar productos en el catálogo..." autocomplete="off">
+        <button id="searchBtn" aria-label="Buscar">🔎</button>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn-secondary" id="btnOpenNewProduct">➕ Añadir Producto</button>
+        <button class="btn-cart" id="btnOpenCart" aria-label="Carrito de compras">
+          🛍️ Carrito
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= FILTRO POR CATEGORÍAS ================= -->
+  <section class="container categories-bar">
+    <div class="categories-wrapper" id="categoriesContainer">
+      <button class="cat-pill active" data-id="">Todas las categorías</button>
+      <!-- Se inyectan dinámicamente -->
+    </div>
+  </section>
+
+  <!-- ================= CATÁLOGO DE PRODUCTOS ================= -->
+  <main class="container main-content">
+    <div class="catalog-header">
+      <h3 id="catalogTitle">Catálogo de Productos</h3>
+      <span class="products-count" id="productsCount">Cargando productos...</span>
+    </div>
+
+    <!-- Rejilla de Productos -->
+    <div class="products-grid" id="productsGrid">
+      <!-- Los productos se inyectan dinámicamente mediante app.js -->
+    </div>
+
+    <!-- Estado vacío o error -->
+    <div class="empty-state hidden" id="emptyState">
+      <span class="empty-icon">📦</span>
+      <h4>No se encontraron productos</h4>
+      <p>Intenta ajustar tu búsqueda o categoría seleccionada.</p>
+      <button class="btn-primary" onclick="resetFilters()">Restablecer Filtros</button>
+    </div>
+  </main>
+
+  <!-- ================= MODAL DEL CARRITO & CHECKOUT ================= -->
+  <div class="modal-overlay hidden" id="cartModal">
+    <div class="modal-box modal-cart">
+      <div class="modal-header">
+        <h3>🛍️ Tu Carrito de Compras</h3>
+        <button class="btn-close" id="btnCloseCart">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="cart-items" id="cartItemsList">
+          <!-- Items del carrito -->
+        </div>
+
+        <div class="cart-summary" id="cartSummary">
+          <div class="summary-line">
+            <span>Subtotal:</span>
+            <span id="cartSubtotal">$0.00</span>
+          </div>
+          <div class="summary-line">
+            <span>IVA Estimado (19%):</span>
+            <span id="cartTax">$0.00</span>
+          </div>
+          <div class="summary-line total-line">
+            <strong>Total a Pagar:</strong>
+            <strong id="cartTotal">$0.00</strong>
+          </div>
+        </div>
+
+        <!-- Formulario de Pedido -->
+        <form class="checkout-form" id="checkoutForm">
+          <h4>Datos del Pedido</h4>
+          <div class="form-group">
+            <label for="custName">Nombre Completo *</label>
+            <input type="text" id="custName" required placeholder="Ej. Juan Pérez">
+          </div>
+          <div class="form-group">
+            <label for="custEmail">Correo Electrónico *</label>
+            <input type="email" id="custEmail" required placeholder="juan.perez@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label for="custAddress">Dirección de Entrega *</label>
+            <input type="text" id="custAddress" required placeholder="Av. Principal # 12-34">
+          </div>
+          <button type="submit" class="btn-primary btn-checkout" id="btnConfirmOrder">
+            🚀 Confirmar Pedido en Capa 2 y 3
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DIAGNÓSTICO DE ARQUITECTURA ================= -->
+  <div class="modal-overlay hidden" id="diagModal">
+    <div class="modal-box modal-diag">
+      <div class="modal-header">
+        <h3>🔍 Estado de la Arquitectura de 3 Capas</h3>
+        <button class="btn-close" id="btnCloseDiag">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="diag-desc">Este panel consulta en tiempo real el endpoint <code>/api/health</code> de la <strong>Capa 2 (Backend)</strong>, el cual a su vez valida la conectividad con la <strong>Capa 3 (RDS PostgreSQL)</strong>.</p>
+        
+        <div class="diag-metrics" id="diagMetrics">
+          <div class="metric-card">
+            <small>Capa 1: Web</small>
+            <strong id="diagWeb">Nginx (Cliente)</strong>
+          </div>
+          <div class="metric-card">
+            <small>Capa 2: Lógica</small>
+            <strong id="diagApp">Verificando...</strong>
+          </div>
+          <div class="metric-card">
+            <small>Capa 3: Datos</small>
+            <strong id="diagDb">Verificando...</strong>
+          </div>
+          <div class="metric-card">
+            <small>Latencia API</small>
+            <strong id="diagLatency">-- ms</strong>
+          </div>
+        </div>
+
+        <h4>Respuesta JSON del Backend (/api/health)</h4>
+        <pre class="json-viewer" id="diagJson">Consultando backend...</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL CREAR NUEVO PRODUCTO ================= -->
+  <div class="modal-overlay hidden" id="newProductModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>➕ Registrar Nuevo Producto</h3>
+        <button class="btn-close" id="btnCloseNewProduct">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="newProductForm">
+          <div class="form-group">
+            <label for="prodName">Nombre del Producto *</label>
+            <input type="text" id="prodName" required placeholder="Ej. Cámara Web 4K Ultra HD">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodCategory">Categoría</label>
+              <select id="prodCategory">
+                <option value="1">Electrónica</option>
+                <option value="2">Hogar & Oficina</option>
+                <option value="3">Moda & Accesorios</option>
+                <option value="4">Gaming</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="prodEmoji">Icono / Emoji</label>
+              <input type="text" id="prodEmoji" value="📦" maxlength="4">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prodPrice">Precio ($ USD) *</label>
+              <input type="number" id="prodPrice" step="0.01" min="0" required placeholder="59.99">
+            </div>
+            <div class="form-group">
+              <label for="prodStock">Stock Inicial *</label>
+              <input type="number" id="prodStock" min="0" required placeholder="20">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="prodDesc">Descripción</label>
+            <textarea id="prodDesc" rows="3" placeholder="Detalles y características del producto..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary">Guardar en Base de Datos</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PIE DE PÁGINA ================= -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <p><strong>Universidad Popular del Cesar</strong> — Guía Técnica: Despliegue de Tres Capas en AWS con Terraform</p>
+      <p><small>Capa 1: EC2 Nginx (Pública) | Capa 2: EC2 Backend :8080 (Privada) | Capa 3: Amazon RDS PostgreSQL (Privada)</small></p>
+    </div>
+  </footer>
+
+  <!-- Script principal de la aplicación -->
+  <script src="app.js"></script>
+</body>
+</html>
+
